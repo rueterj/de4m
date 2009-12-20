@@ -1,7 +1,6 @@
 #summary Coming features:
 
 === Short Term ===
-  * Armor type field
   * auto-set checkboxes on field edit
   * auto disabling of inappropriate fields on import
   * more intuitive error messages
