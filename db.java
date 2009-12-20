@@ -61,7 +61,9 @@ public void exportprep(int entry){
 }
 
 public void dbExport(String field, String data){
-	try{st.executeUpdate("UPDATE temp_ic_item_template SET "+field+"="+data);}
+	String apost = "";
+	if (field == "name" | field == "description"){apost = "'";}
+	try{st.executeUpdate("UPDATE temp_ic_item_template SET "+field+"="+apost+data+apost);}
 	catch(Exception e){status = "Export failed:\n"+e;allclear=false;}
 }
 
