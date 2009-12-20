@@ -1,0 +1,16 @@
+#summary Coming features:
+
+== Short Term ==
+  * Armor type field
+  * auto-set checkboxes on field edit
+  * auto disabling of inappropriate fields on import
+  * more intuitive error messages
+  * detection and correction of bad input
+
+== Long Term ==
+  * spells tab
+  * quest editor
+  * ability to save items to file
+  * guaranteed support for multiple versions
+  * user database and table selection instead of fixed
+  * instead of checkboxes, color code the attribute fields
