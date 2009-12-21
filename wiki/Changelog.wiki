@@ -1,5 +1,9 @@
 #summary Version history:
 
+=== alpha 0.9 ===
+  * invalid numerical input will now be automatically corrected
+  * error messages for exports significantly improved
+
 === alpha 0.8 ===
   * fixed names and descriptions not exporting correctly
   * added armor type dropdown

@@ -63,7 +63,7 @@ public deform() {
 	add(PC);
 	pack();
 	setLocationRelativeTo(null);
-	setTitle("Deform alpha.0.8");
+	setTitle("Deform alpha.0.9");
 	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	// LISTENERS
 	R_allCB.addActionListener(this);
@@ -179,6 +179,7 @@ public void executeImport() {
 ////////////
 
 public void executeExport() {
+	if (!inputErrors()){
 	try{
 	db.exportprep(Integer.parseInt(NEWENTRYFIELD.getText()));
 	
@@ -206,6 +207,38 @@ public void executeExport() {
 		INOUT.setText(db.getstatus());}}
 		
 	catch (Exception e){INOUT.setText("Export failed.\n\n"+e);}}
+	else {INOUT.setText(ereport);}}
+
+public boolean inputErrors(){
+	JTextField[] tinyint = {G_level,M_slots,A_holy,A_shadow,A_arcane,A_nature,A_fire,A_frost};
+	JTextField[] smallint = {M_carry,M_stack,A_armor,W_speed,G_durability,S_0value,S_1value,S_2value,S_3value,S_4value,S_5value,S_6value,S_7value,S_8value,S_9value};
+	JTextField[] mediumint = {NEWENTRYFIELD,A_block};
+	JTextField[] regularint = {M_buy,M_sell};
+	String[] tinynames = {"Level","Slots","Holy res","Shadow res","Arcane res","Nature res","Fire res","Frost res"};
+	String[] smallnames = {"Max carry","Max stack","Armor","Speed","Durability","Stat values","Stat values","Stat values","Stat values","Stat values","Stat values","Stat values","Stat values","Stat values","Stat values"};
+	String[] mediumnames = {"Entry","Block"};
+	String[] regularnames = {"Buy price","Sell price"};
+	boolean errors = false;
+	int i=0,j=0,k=0,l=0;
+	String errorz = "The following errors ocurred during export:\n";
+	for (JTextField next : tinyint){if (next.getText().length() == 0){next.setText("0");}
+		try{if(Float.parseFloat(next.getText()) > 127){next.setText("127");}i++;
+		} catch (Exception e){errorz+=tinynames[i] + " must contain only numbers\n";errors = true;}}
+	for (JTextField next : smallint){if (next.getText().length() == 0){next.setText("0");}
+		try{if(Float.parseFloat(next.getText()) > 32767){next.setText("32767");}j++;
+		} catch (Exception e){errorz+=smallnames[j] + " must contain only numbers\n";errors = true;}}
+	for (JTextField next : mediumint){if (next.getText().length() == 0){next.setText("0");}
+		try{if(Float.parseFloat(next.getText()) > 8388607){next.setText("8388607");}k++;
+		} catch (Exception e){errorz+=mediumnames[k] + " must contain only numbers\n";errors = true;}}
+	for (JTextField next : regularint){if (next.getText().length() == 0){next.setText("0");}
+		try{if(Float.parseFloat(next.getText()) > 2147483647){next.setText("2147483647");}l++;
+		} catch (Exception e){errorz+=regularnames[l] + " must contain only numbers\n";errors = true;}}
+	if (G_name.getText().indexOf("\"") != -1){errorz+="Name must not contain quotation marks, apostrophes, or asterisks\n";errors = true;}
+	if (G_name.getText().indexOf("\'") != -1){errorz+="Name must not contain quotation marks, apostrophes, or asterisks\n";errors = true;}
+	if (G_description.getText().indexOf("\"") != -1){errorz+="Description must not contain quotation marks, apostrophes, or asterisks\n";errors = true;}
+	if (G_description.getText().indexOf("\'") != -1){errorz+="Description must not contain quotation marks, apostrophes, or asterisks\n";errors = true;}
+	ereport = errorz;
+	return errors;}
 
 public String digify(String text) {
     String output = "";
@@ -223,7 +256,7 @@ JPanel PB = new JPanel(),PB1 = new JPanel(),PB2 = new JPanel(),PB3 = new JPanel(
 JTabbedPane PC = new JTabbedPane(), wepdmg = new JTabbedPane();
 JPasswordField MYSQLpass = new JPasswordField("root",13);
 JButton CONNECTbutton = new JButton("<HTML><B><FONT COLOR=\"#BBBB00\">##</FONT> Connect <FONT COLOR=\"#BBBB00\">##</FONT>"),IMPORTbuttonA = new JButton("Lookup"),CREATEbuttonA = new JButton("Create"),importSEL = new JButton("Import"),HELPbutton = new JButton("Help");
-String helptext = "To connect,enter your access info and click 'Connect'.\nThis 'item creator' works by building off of existing game items.  Pick an item you want to copy from to get the item type,icon,and model (pick a sword to make a sword,pick a bag to make a bag,etc),and type the name of that item into the 'Lookup by name' field,then click 'Lookup'.  Once the query has finished running,a drop-down box will appear with all items matching your search.  Select one and click 'import'.  This will enable the item info tabs,allowing you to edit the item's stats.  Once you have finished your adjustments,return to the main tab,enter a unique item ID to specify the item from ingame (cannot be a duplicate,so I advise using numbers greater than 50,000),and click 'Create'.  If everything goes right,the item will be injected to your database.\n\nCode by 711.  http://code.google.com/p/de4m/";
+String helptext = "To connect,enter your access info and click 'Connect'.\nThis 'item creator' works by building off of existing game items.  Pick an item you want to copy from to get the item type,icon,and model (pick a sword to make a sword,pick a bag to make a bag,etc),and type the name of that item into the 'Lookup by name' field,then click 'Lookup'.  Once the query has finished running,a drop-down box will appear with all items matching your search.  Select one and click 'import'.  This will enable the item info tabs,allowing you to edit the item's stats.  Once you have finished your adjustments,return to the main tab,enter a unique item ID to specify the item from ingame (cannot be a duplicate,so I advise using numbers greater than 50,000),and click 'Create'.  If everything goes right,the item will be injected to your database.\n\nCode by 711.  http://code.google.com/p/de4m/", ereport;
 JTextArea INOUT = new JTextArea("Not currently connected.  \n" + helptext,12,53);
 JTextField NEWENTRYFIELD = new JTextField(5), IMPORTTHIS = new JTextField(12), MYSQLdb = new JTextField("3306",13), MYSQLhost = new JTextField("127.0.0.1",13), MYSQLuser = new JTextField("root",13);
 JCheckBox G_mapCB = new JCheckBox("Remove usage restrictions"), A_resistsCB = new JCheckBox("Resistances"), C_0CB = new JCheckBox("Druid"), C_1CB = new JCheckBox("Warrior"), C_2CB = new JCheckBox("Paladin"), C_3CB = new JCheckBox("Hunter"), C_4CB = new JCheckBox("Rogue"), C_5CB = new JCheckBox("Priest"), C_6CB = new JCheckBox("Death Knight"), C_7CB = new JCheckBox("Shaman"), C_8CB = new JCheckBox("Mage"), C_9CB = new JCheckBox("Warlock"), C_allCB = new JCheckBox("<HTML><B>All Classes</B>"), NULLCB = new JCheckBox(), R_0CB = new JCheckBox("Dranei"), R_1CB = new JCheckBox("Human"), R_2CB = new JCheckBox("Orc"), R_3CB = new JCheckBox("Dwarf"), R_4CB = new JCheckBox("Night Elf"), R_5CB = new JCheckBox("Undead"), R_6CB = new JCheckBox("Tauren"), R_7CB = new JCheckBox("Gnome"), R_8CB = new JCheckBox("Troll"), R_9CB = new JCheckBox("Blood Elf"), R_allCB = new JCheckBox("<HTML><B>All Races</B>");
