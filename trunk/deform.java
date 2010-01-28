@@ -2,14 +2,17 @@ package de4m;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.filechooser.*;
 import de4m.*;
 
 class deform extends JFrame implements ActionListener {
 	
 db db = new db();
 int sdd;
+boolean tofile = false;
 
 public static void main(String args[]) {
 	try{UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -21,8 +24,8 @@ public deform() {
 	// ESTABLISH
 	buildgroups();
 	PC.addTab("<HTML><B>CONNECTION", PB);
-	PC.addTab("<HTML><B><FONT COLOR=\"#666666\">GENERAL / WEAPONS / ARMOR", MASTER1);
-	PC.addTab("<HTML><B><FONT COLOR=\"#666666\">MISC / RACE+CLASS / STATS", MASTER2);
+	PC.addTab("<HTML><B><FONT COLOR=\"#666666\">GENERAL / MISC / RACE+CLASS", MASTER1);
+	PC.addTab("<HTML><B><FONT COLOR=\"#666666\">WEAPONS / ARMOR / STATS", MASTER2);
 	wepdmg.addTab("Primary dmg", wepdmg1);
 	wepdmg.addTab("Secondary dmg", wepdmg2);
 	PC.setEnabledAt(1, false);
@@ -35,23 +38,19 @@ public deform() {
 	PB3.add(CREATElabel);
 	PB3.add(NEWENTRYFIELD);
 	PB3.add(CREATEbuttonA);
+	PB3.add(TOFILECB);
 	PB4.add(HELPbutton);
 	PB4.add(CONNECTbutton);
 	INOUTBOX.add(INOUT);
 	// STYLE
 	Border sp = BorderFactory.createMatteBorder(0, 4, 0, 4, Color.gray);
-	PI.setBorder(sp);
-	PQ.setBorder(sp);
+	//PI.setBorder(sp); remove borders
+	//PQ.setBorder(sp); for now
 	PB.setLayout(new BoxLayout(PB, BoxLayout.Y_AXIS));
 	PB2.setLayout(new FlowLayout(FlowLayout.LEFT));
 	PB3.setLayout(new FlowLayout(FlowLayout.LEFT));
 	PB4.setLayout(new FlowLayout(FlowLayout.RIGHT));
-	MASTER1.add(PH, BorderLayout.WEST);
-	MASTER1.add(PI, BorderLayout.CENTER);
-	MASTER1.add(PJ, BorderLayout.EAST);
-	MASTER2.add(PK, BorderLayout.WEST);
-	MASTER2.add(PQ, BorderLayout.CENTER);
-	MASTER2.add(PS, BorderLayout.EAST);
+	establishMasterPanels();
 	INOUTBOX.setLayout(new FlowLayout(FlowLayout.LEFT));
 	INOUT.setLineWrap(true);
 	INOUT.setWrapStyleWord(true);
@@ -63,7 +62,7 @@ public deform() {
 	add(PC);
 	pack();
 	setLocationRelativeTo(null);
-	setTitle("Deform alpha.0.9");
+	setTitle("Deform BETA RC1");
 	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	// LISTENERS
 	R_allCB.addActionListener(this);
@@ -72,8 +71,10 @@ public deform() {
 	IMPORTbuttonA.addActionListener(this);
 	IMPORTTHIS.addActionListener(this);
 	importSEL.addActionListener(this);
+	tableSEL.addActionListener(this);
 	HELPbutton.addActionListener(this);
-	CREATEbuttonA.addActionListener(this);}
+	CREATEbuttonA.addActionListener(this);
+	TOFILECB.addActionListener(this);}
 
 public void actionPerformed(ActionEvent e) {
 	if (e.getSource() == R_allCB) {
@@ -85,7 +86,21 @@ public void actionPerformed(ActionEvent e) {
 	if (e.getSource() == IMPORTbuttonA) {executeLookup();}
 	if (e.getSource() == IMPORTTHIS) {executeLookup();}
 	if (e.getSource() == importSEL) {executeImport();}
-	if (e.getSource() == CREATEbuttonA) {executeExport();}}
+	if (e.getSource() == tableSEL) {executeTableSelect();}
+	if (e.getSource() == CREATEbuttonA) {executeExport();}
+	if (e.getSource() == TOFILECB) {
+		if (tofile){tofile = false; CREATEbuttonA.setText("Create"); PB4.add(HELPbutton); PB4.add(CONNECTbutton); pack();} else
+		{tofile = true; CREATEbuttonA.setText("Save to file"); PB4.remove(HELPbutton); pack();}}}
+
+public void establishMasterPanels() {
+	MASTER1.removeAll();
+	MASTER2.removeAll();
+	MASTER1.add(PH, BorderLayout.WEST);
+	MASTER1.add(PK, BorderLayout.CENTER);
+	MASTER1.add(PQ, BorderLayout.EAST);
+	MASTER2.add(PI, BorderLayout.WEST);
+	MASTER2.add(PJ, BorderLayout.CENTER);
+	MASTER2.add(PS, BorderLayout.EAST);}
 
 public void showhelp() {
 	INOUT.setText(helptext);}
@@ -94,9 +109,25 @@ public void establishConnection() {
 	String passs = "";
 	for (char next : MYSQLpass.getPassword()) {
 		passs += next;}
-	db.dbConnect(MYSQLhost.getText(), MYSQLdb.getText(), MYSQLuser.getText(), passs);
+	db.dbConnect(MYSQLhost.getText(), MYSQLdb.getText(), MYSQLuser.getText(), passs, MYSQLdeebee.getText());
+	TABLESDD = new JComboBox(db.dbTables());
+	PB2.remove(TABLESDD);
+	PB2.add(TABLESDD);
+	PB2.add(tableSEL);
+	PB2.revalidate();
+	PB2.repaint();
+	pack();
 	INOUT.setText(db.getstatus());
 	CONNECTbutton.setText("<HTML><B><FONT COLOR=\"#" + db.getcolor() + "\">##</FONT> Connect <FONT COLOR=\"#" + db.getcolor() + "\">##</FONT>");}
+
+public void executeTableSelect() {
+	db.setTable(TABLESDD.getSelectedIndex());
+	PB2.remove(TABLESDD);
+	PB2.remove(tableSEL);
+	PB2.revalidate();
+	PB2.repaint();
+	pack();
+}
 
 public void executeLookup() {
 	PB2.remove(IMPORTDD);
@@ -107,7 +138,10 @@ public void executeLookup() {
 		PB2.repaint();
 		pack();
 	} catch (Exception e) {
-		INOUT.setText("Could not execute lookup.\n-Have you connected to MySQL database yet?\n-Does search string include ' or \" ?");}}
+		INOUT.setText("Could not execute lookup.\n"
+			+"-Have you connected to MySQL database yet?\n"
+			+"-Does search string include ' or \" ?\n"
+			+"-Did you select the correct item_template table?");}}
 
 public void endlookup(){
 	PB2.remove(IMPORTDD);
@@ -122,8 +156,12 @@ public void opentabs(){
 	PC.setToolTipTextAt(1, null);
 	PC.setToolTipTextAt(2, null);
 	PC.setSelectedIndex(1);
-	PC.setTitleAt(1, "<HTML><B>GENERAL / WEAPONS / ARMOR");
-	PC.setTitleAt(2, "<HTML><B>MISC / RACE+CLASS / STATS");}
+	PC.setTitleAt(1, "<HTML><B>GENERAL / MISC / RACE+CLASS");
+	PC.setTitleAt(2, "<HTML><B>WEAPONS / ARMOR / STATS");
+	M_food.setEnabled(true); 
+	M_foodCB.setEnabled(true);
+	M_slots.setEnabled(true); 
+	M_slotsCB.setEnabled(true);}
 
   ////////////
  // IMPORT //
@@ -169,9 +207,21 @@ public void executeImport() {
 		if (importclass - rcmod[i] >= 0){importclass-= rcmod[i];cmod[i].setSelected(true);}}
 	if (importrace < 0) {R_allCB.doClick();}
 	if (importclass < 0) {C_allCB.doClick();}
-		
-	INOUT.setText(db.getstatus());
-	opentabs();}
+	
+	int importtypeint = db.dbInt("class");
+	String[] importtypes = {"Consumable", "Container", "Weapon", "Gem", "Armor", "Reagent", "Projectile", "Trade Good", "Generic", "Recipe", "Money", "Quiver", "Quest", "Key", "Permanent", "Misc item", "Glyph"};
+	setTitle("Deform BETA RC1 / Editing " + importtypes[importtypeint] + ": " +G_name.getText());
+	establishMasterPanels();
+	opentabs();
+	if (importtypeint != 0) {M_food.setEnabled(false); M_foodCB.setEnabled(false);}
+	if (importtypeint != 1) {M_slots.setEnabled(false); M_slotsCB.setEnabled(false);}
+	if (importtypeint != 2) {MASTER2.remove(PI);}
+	if (importtypeint != 4) {MASTER2.remove(PJ);}
+	if (importtypeint != 2 && importtypeint != 4) {MASTER2.remove(PS); 
+		PC.setEnabledAt(2, false);
+		PC.setTitleAt(2, "<HTML><B><FONT COLOR=\"#666666\">WEAPONS / ARMOR / STATS");
+		PC.setToolTipTextAt(2, G_name.getText() + " does not have any of these attributes.");}}
+	
 	catch (Exception e){INOUT.setText("Import failed.\n\nTry reconnecting.\n\n"+e);}}
 
   ////////////
@@ -201,11 +251,16 @@ public void executeExport() {
 	if (G_mapCB.isSelected()) { // reset restrictions
 		for (String next : restrictions) {
 			db.dbExport(next, 0);}}
-			
+	
+	if (!tofile) { // for real exports, follow existing protocol
 	if (db.check()); { // send to table
 		db.exportfinalize(G_name.getText(),NEWENTRYFIELD.getText());
 		INOUT.setText(db.getstatus());}}
 		
+	else {choosah.showSaveDialog(this); // for file exports, do it differently
+		String choosen = choosah.getSelectedFile().toString();    
+		db.exportfile(G_name.getText(),NEWENTRYFIELD.getText(), choosen);
+		INOUT.setText(db.getstatus());}}
 	catch (Exception e){INOUT.setText("Export failed.\n\n"+e);}}
 	else {INOUT.setText(ereport);}}
 
@@ -255,12 +310,13 @@ public String digify(String text) {
 JPanel PB = new JPanel(),PB1 = new JPanel(),PB2 = new JPanel(),PB3 = new JPanel(),PB4 = new JPanel(),PB5 = new JPanel(),PF = new JPanel(),PG = new JPanel(),PH = new JPanel(),PI = new JPanel(),PJ = new JPanel(),PK = new JPanel(),PQ = new JPanel(),PS = new JPanel(),GROUP1 = new JPanel(),GROUP2 = new JPanel(),GROUP3 = new JPanel(),GROUP4 = new JPanel(),GROUP5 = new JPanel(),GROUP6 = new JPanel(),GROUP7 = new JPanel(),GROUP8 = new JPanel(),GROUP9 = new JPanel(),MASTER1 = new JPanel(),MASTER2 = new JPanel(),wepdmg1 = new JPanel(),wepdmg2 = new JPanel(),INOUTBOX = new JPanel();
 JTabbedPane PC = new JTabbedPane(), wepdmg = new JTabbedPane();
 JPasswordField MYSQLpass = new JPasswordField("root",13);
-JButton CONNECTbutton = new JButton("<HTML><B><FONT COLOR=\"#BBBB00\">##</FONT> Connect <FONT COLOR=\"#BBBB00\">##</FONT>"),IMPORTbuttonA = new JButton("Lookup"),CREATEbuttonA = new JButton("Create"),importSEL = new JButton("Import"),HELPbutton = new JButton("Help");
-String helptext = "To connect,enter your access info and click 'Connect'.\nThis 'item creator' works by building off of existing game items.  Pick an item you want to copy from to get the item type,icon,and model (pick a sword to make a sword,pick a bag to make a bag,etc),and type the name of that item into the 'Lookup by name' field,then click 'Lookup'.  Once the query has finished running,a drop-down box will appear with all items matching your search.  Select one and click 'import'.  This will enable the item info tabs,allowing you to edit the item's stats.  Once you have finished your adjustments,return to the main tab,enter a unique item ID to specify the item from ingame (cannot be a duplicate,so I advise using numbers greater than 50,000),and click 'Create'.  If everything goes right,the item will be injected to your database.\n\nCode by 711.  http://code.google.com/p/de4m/", ereport;
+JButton CONNECTbutton = new JButton("<HTML><B><FONT COLOR=\"#BBBB00\">##</FONT> Connect <FONT COLOR=\"#BBBB00\">##</FONT>"),IMPORTbuttonA = new JButton("Lookup"),CREATEbuttonA = new JButton("Create"),importSEL = new JButton("Import"),HELPbutton = new JButton("Help"),tableSEL = new JButton("Select table");
+String helptext = "To connect,enter your access info and click 'Connect'.\nThis 'item creator' works by building off of existing game items.  Pick an item you want to copy from to get the item type,icon,and model (pick a sword to make a sword,pick a bag to make a bag,etc),and type the name of that item into the 'Lookup by name' field,then click 'Lookup'.  Once the query has finished running,a drop-down box will appear with all items matching your search.  Select one and click 'import'.  This will enable the item info tabs,allowing you to edit the item's stats.  Once you have finished your adjustments,return to the main tab,enter a unique item ID to specify the item from ingame (cannot be a duplicate,so I advise using numbers greater than 50,000),and click 'Create'.  If everything goes right,the item will be injected to your database.\n\nCode by 711.  http://de4m.googlecode.com", ereport;
 JTextArea INOUT = new JTextArea("Not currently connected.  \n" + helptext,12,53);
-JTextField NEWENTRYFIELD = new JTextField(5), IMPORTTHIS = new JTextField(12), MYSQLdb = new JTextField("3306",13), MYSQLhost = new JTextField("127.0.0.1",13), MYSQLuser = new JTextField("root",13);
-JCheckBox G_mapCB = new JCheckBox("Remove usage restrictions"), A_resistsCB = new JCheckBox("Resistances"), C_0CB = new JCheckBox("Druid"), C_1CB = new JCheckBox("Warrior"), C_2CB = new JCheckBox("Paladin"), C_3CB = new JCheckBox("Hunter"), C_4CB = new JCheckBox("Rogue"), C_5CB = new JCheckBox("Priest"), C_6CB = new JCheckBox("Death Knight"), C_7CB = new JCheckBox("Shaman"), C_8CB = new JCheckBox("Mage"), C_9CB = new JCheckBox("Warlock"), C_allCB = new JCheckBox("<HTML><B>All Classes</B>"), NULLCB = new JCheckBox(), R_0CB = new JCheckBox("Dranei"), R_1CB = new JCheckBox("Human"), R_2CB = new JCheckBox("Orc"), R_3CB = new JCheckBox("Dwarf"), R_4CB = new JCheckBox("Night Elf"), R_5CB = new JCheckBox("Undead"), R_6CB = new JCheckBox("Tauren"), R_7CB = new JCheckBox("Gnome"), R_8CB = new JCheckBox("Troll"), R_9CB = new JCheckBox("Blood Elf"), R_allCB = new JCheckBox("<HTML><B>All Races</B>");
-JComboBox IMPORTDD = new JComboBox();
+JTextField NEWENTRYFIELD = new JTextField(5), IMPORTTHIS = new JTextField(12), MYSQLdb = new JTextField("3306",13), MYSQLhost = new JTextField("127.0.0.1",13), MYSQLuser = new JTextField("root",13), MYSQLdeebee = new JTextField("mangos",13);
+JCheckBox G_mapCB = new JCheckBox("Remove usage restrictions"), A_resistsCB = new JCheckBox("Resistances"), C_0CB = new JCheckBox("Druid"), C_1CB = new JCheckBox("Warrior"), C_2CB = new JCheckBox("Paladin"), C_3CB = new JCheckBox("Hunter"), C_4CB = new JCheckBox("Rogue"), C_5CB = new JCheckBox("Priest"), C_6CB = new JCheckBox("Death Knight"), C_7CB = new JCheckBox("Shaman"), C_8CB = new JCheckBox("Mage"), C_9CB = new JCheckBox("Warlock"), C_allCB = new JCheckBox("<HTML><B>All Classes</B>"), NULLCB = new JCheckBox(), R_0CB = new JCheckBox("Dranei"), R_1CB = new JCheckBox("Human"), R_2CB = new JCheckBox("Orc"), R_3CB = new JCheckBox("Dwarf"), R_4CB = new JCheckBox("Night Elf"), R_5CB = new JCheckBox("Undead"), R_6CB = new JCheckBox("Tauren"), R_7CB = new JCheckBox("Gnome"), R_8CB = new JCheckBox("Troll"), R_9CB = new JCheckBox("Blood Elf"), R_allCB = new JCheckBox("<HTML><B>All Races</B>"), TOFILECB = new JCheckBox();
+JComboBox IMPORTDD = new JComboBox(), TABLESDD = new JComboBox();
+JFileChooser choosah = new JFileChooser();
 
 // editable content
 Object[] ammooa = {"2-arrows","3-bullets"}, bondingoa = {"0-none","1-pickup","2-equip","3-use","4-quest"}, damtypeoa = {"0-physical","1-holy","2-fire","3-nature","4-frost","5-shadow","6-arcane"}, foodoa = {"1-meat","2-fish","3-cheese","4-bread","5-fungus","6-fruit","7-raw meat","8-raw fish"}, materialoa = {"1-metal","2-wood","3-liquid","4-jewelry","5-chain","6-plate","7-cloth","8-leather"}, qualityoa = {"0-grey","1-white","2-green","3-blue","4-purple","5-orange","6-red"}, sheathoa = {"1-back point down","2-back pointing up","3-side","4-back center","5-wand/rod","6-offhand side"}, socketsoa = {"0-none","1-meta","2-red","3-yellow","8-blue"}, statsoa = {"0-mana","1-health","3-agility","4-strength","5-intellect","6-spirit","7-stamina","12-defense","13-dodge","14-parry","15-block","16-hit melee","17-hit ranged","18-hit spell","19-crit melee","20-crit ranged","21-crit spell","22-hit taken m","23-hit taken r","24-hit taken s","25-crit taken m","26-crit taken r","27-crit taken s","28-haste melee","29-haste ranged","30-haste spell","31-hit","32-crit","33-hit taken","34-crit taken","35-resilience","36-haste","37-expertise"}, wephandoa = {"13-one hand","15-ranged","17-two hand",
@@ -268,7 +324,7 @@ Object[] ammooa = {"2-arrows","3-bullets"}, bondingoa = {"0-none","1-pickup","2-
 JComboBox A_socket1 = new JComboBox(socketsoa), A_socket2 = new JComboBox(socketsoa), A_socket3 = new JComboBox(socketsoa), G_bonding = new JComboBox(bondingoa), G_quality = new JComboBox(qualityoa), M_food = new JComboBox(foodoa), M_material = new JComboBox(materialoa), S_0type = new JComboBox(statsoa), S_1type = new JComboBox(statsoa), S_2type = new JComboBox(statsoa), S_3type = new JComboBox(statsoa), S_4type = new JComboBox(statsoa), S_5type = new JComboBox(statsoa), S_6type = new JComboBox(statsoa), S_7type = new JComboBox(statsoa), S_8type = new JComboBox(statsoa), S_9type = new JComboBox(statsoa), W_ammo = new JComboBox(ammooa), W_damage2 = new JComboBox(damtypeoa), W_damage = new JComboBox(damtypeoa), W_hand = new JComboBox(wephandoa), W_sheath = new JComboBox(sheathoa), W_type = new JComboBox(weptypeoa), A_type = new JComboBox(atypeoa);
 JTextField A_arcane = new JTextField(4), A_armor = new JTextField(10), A_block = new JTextField(8), A_fire = new JTextField(4), A_frost = new JTextField(4), A_holy = new JTextField(4), A_nature = new JTextField(4), A_shadow = new JTextField(4), G_description = new JTextField(8), G_durability = new JTextField(8), G_level = new JTextField(8), G_name = new JTextField(17), M_buy = new JTextField(10), M_carry = new JTextField(8), M_sell = new JTextField(8), M_slots = new JTextField(8), M_stack = new JTextField(8),  S_0value = new JTextField(10), S_1value = new JTextField(8), S_2value = new JTextField(8), S_3value = new JTextField(8), S_4value = new JTextField(8), S_5value = new JTextField(8), S_6value = new JTextField(8), S_7value = new JTextField(8), S_8value = new JTextField(8), S_9value = new JTextField(8), W_max2 = new JTextField(8), W_maximum = new JTextField(8), W_min2 = new JTextField(8), W_minimum = new JTextField(8), W_range = new JTextField(8), W_speed = new JTextField(8);
 JCheckBox A_armorCB = new JCheckBox(), A_blockCB = new JCheckBox(), A_socket1CB = new JCheckBox(), A_socket2CB = new JCheckBox(), A_socket3CB = new JCheckBox(), G_bondingCB = new JCheckBox(), G_descriptionCB = new JCheckBox(), G_durabilityCB = new JCheckBox(), G_levelCB = new JCheckBox(), G_nameCB = new JCheckBox(), G_qualityCB = new JCheckBox(), M_buyCB = new JCheckBox(), M_carryCB = new JCheckBox(), M_foodCB = new JCheckBox(), M_materialCB = new JCheckBox(), M_sellCB = new JCheckBox(), M_slotsCB = new JCheckBox(), M_stackCB = new JCheckBox(), W_ammoCB = new JCheckBox(), W_damage2CB = new JCheckBox(), W_damageCB = new JCheckBox(), W_handCB = new JCheckBox(), W_max2CB = new JCheckBox(), W_maximumCB = new JCheckBox(), W_min2CB = new JCheckBox(), W_minimumCB = new JCheckBox(), W_rangeCB = new JCheckBox(), W_sheathCB = new JCheckBox(), W_speedCB = new JCheckBox(), W_typeCB = new JCheckBox(), A_typeCB = new JCheckBox(); 
-JLabel A_arcaneLabel = new JLabel("Arcane"), A_armorLabel = new JLabel("Armor"), A_blockLabel = new JLabel("Block"), A_fireLabel = new JLabel("Fire"), A_frostLabel = new JLabel("Frost"), A_holyLabel = new JLabel("Holy"), A_natureLabel = new JLabel("Nature"), A_shadowLabel = new JLabel("Shadow"), A_socket1Label = new JLabel("Socket1"), A_socket2Label = new JLabel("Socket2"), A_socket3Label = new JLabel("Socket3"), CREATElabel = new JLabel("New ID:"), G_bondingLabel = new JLabel("Bonding"), G_descriptionLabel = new JLabel("Description"), G_durabilityLabel = new JLabel("Dura"), G_levelLabel = new JLabel("LevelReq"), G_nameLabel = new JLabel("Name"), G_qualityLabel = new JLabel("Quality"), IMPORTlabel = new JLabel("Name:"), MYSQLdbLabel = new JLabel("<HTML><B>MYSQL port"), MYSQLhostLabel = new JLabel("<HTML><B>MYSQL host"), MYSQLpassLabel = new JLabel("<HTML><B>MYSQL password"), MYSQLuserLabel = new JLabel("<HTML><B>MYSQL username"), M_buyLabel = new JLabel("Buy Price"), M_carryLabel = new JLabel("MaxCarry"), M_foodLabel = new JLabel("FoodType"), M_materialLabel = new JLabel("Material"), M_sellLabel = new JLabel("Sell Price"), M_slotsLabel = new JLabel("BagSlots"), 
+JLabel A_arcaneLabel = new JLabel("Arcane"), A_armorLabel = new JLabel("Armor"), A_blockLabel = new JLabel("Block"), A_fireLabel = new JLabel("Fire"), A_frostLabel = new JLabel("Frost"), A_holyLabel = new JLabel("Holy"), A_natureLabel = new JLabel("Nature"), A_shadowLabel = new JLabel("Shadow"), A_socket1Label = new JLabel("Socket1"), A_socket2Label = new JLabel("Socket2"), A_socket3Label = new JLabel("Socket3"), CREATElabel = new JLabel("New ID:"), G_bondingLabel = new JLabel("Bonding"), G_descriptionLabel = new JLabel("Description"), G_durabilityLabel = new JLabel("Dura"), G_levelLabel = new JLabel("LevelReq"), G_nameLabel = new JLabel("Name"), G_qualityLabel = new JLabel("Quality"), IMPORTlabel = new JLabel("Name:"), MYSQLdbLabel = new JLabel("<HTML><B>MYSQL port"), MYSQLhostLabel = new JLabel("<HTML><B>MYSQL host"), MYSQLpassLabel = new JLabel("<HTML><B>MYSQL password"), MYSQLdeebeeLabel = new JLabel("<HTML><B>MaNGOS database"), MYSQLuserLabel = new JLabel("<HTML><B>MYSQL username"), M_buyLabel = new JLabel("Buy Price"), M_carryLabel = new JLabel("MaxCarry"), M_foodLabel = new JLabel("FoodType"), M_materialLabel = new JLabel("Material"), M_sellLabel = new JLabel("Sell Price"), M_slotsLabel = new JLabel("BagSlots"), 
 	M_stackLabel = new JLabel("MaxStack"), S_0Label = new JLabel("modify by:"), S_1Label = new JLabel("modify by:"), S_2Label = new JLabel("modify by:"), S_3Label = new JLabel("modify by;"), S_4Label = new JLabel("modify by:"), S_5Label = new JLabel("modify by:"), S_6Label = new JLabel("modify by:"), S_7Label = new JLabel("modify by:"), S_8Label = new JLabel("modify by:"), S_9Label = new JLabel("modify by:"), W_ammoLabel = new JLabel("Ammo"), W_damage2Label = new JLabel("DmgType"), W_damageLabel = new JLabel("DmgType"), W_handLabel = new JLabel("Hand"), W_max2Label = new JLabel("MaxDmg"), W_maximumLabel = new JLabel("MaxDmg"), W_min2Label = new JLabel("MinDmg"), W_minimumLabel = new JLabel("MinDmg"), W_rangeLabel = new JLabel("Range"), W_sheathLabel = new JLabel("Sheath"), W_speedLabel = new JLabel("Speed"), W_typeLabel = new JLabel("Type"), aseclabel = new JLabel("<HTML><B>ARMOR"), gseclabel = new JLabel("<HTML><B>GENERAL"), mseclabel = new JLabel("<HTML><B>MISC"), rseclabel = new JLabel("<HTML><B>RACE/CLASS"), sseclabel = new JLabel("<HTML><B>STATS"), wseclabel = new JLabel("<HTML><B>WEAPONS"), A_typeLabel = new JLabel("Type");
 
 // import/export helpers
@@ -289,8 +345,8 @@ JCheckBox[] cmod = {C_0CB, NULLCB, C_9CB, C_8CB, C_7CB, C_6CB, C_5CB, C_4CB, C_3
 public void buildgroups(){
 	// COMPONENT GRIDS
 	GroupLayout GROUP1LAYOUT = new GroupLayout(GROUP1);GROUP1.setLayout(GROUP1LAYOUT);
-		GROUP1LAYOUT.setHorizontalGroup(GROUP1LAYOUT.createSequentialGroup().addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLhostLabel).addComponent(MYSQLhost)).addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLdbLabel).addComponent(MYSQLdb)).addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLuserLabel).addComponent(MYSQLuser)).addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLpassLabel).addComponent(MYSQLpass)));
-		GROUP1LAYOUT.setVerticalGroup(GROUP1LAYOUT.createSequentialGroup().addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLhostLabel).addComponent(MYSQLdbLabel).addComponent(MYSQLuserLabel).addComponent(MYSQLpassLabel)).addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLhost).addComponent(MYSQLdb).addComponent(MYSQLuser).addComponent(MYSQLpass)));
+		GROUP1LAYOUT.setHorizontalGroup(GROUP1LAYOUT.createSequentialGroup().addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLhostLabel).addComponent(MYSQLhost)).addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLdbLabel).addComponent(MYSQLdb)).addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLuserLabel).addComponent(MYSQLuser)).addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLpassLabel).addComponent(MYSQLpass)).addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLdeebeeLabel).addComponent(MYSQLdeebee)));
+		GROUP1LAYOUT.setVerticalGroup(GROUP1LAYOUT.createSequentialGroup().addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLhostLabel).addComponent(MYSQLdbLabel).addComponent(MYSQLuserLabel).addComponent(MYSQLpassLabel).addComponent(MYSQLdeebeeLabel)).addGroup(GROUP1LAYOUT.createParallelGroup().addComponent(MYSQLhost).addComponent(MYSQLdb).addComponent(MYSQLuser).addComponent(MYSQLpass).addComponent(MYSQLdeebee)));
 	GroupLayout GROUP2LAYOUT = new GroupLayout(GROUP2);GROUP2.setLayout(GROUP2LAYOUT);GROUP2LAYOUT.setAutoCreateGaps(true);
         GROUP2LAYOUT.setHorizontalGroup(GROUP2LAYOUT.createSequentialGroup().addGroup(GROUP2LAYOUT.createParallelGroup().addComponent(G_nameLabel).addComponent(G_descriptionLabel).addComponent(G_levelLabel).addComponent(G_durabilityLabel).addComponent(G_qualityLabel).addComponent(G_bondingLabel)).addGroup(GROUP2LAYOUT.createParallelGroup().addComponent(G_name).addComponent(G_description).addComponent(G_level).addComponent(G_durability).addComponent(G_quality).addComponent(G_bonding)).addGroup(GROUP2LAYOUT.createParallelGroup().addComponent(G_nameCB).addComponent(G_descriptionCB).addComponent(G_levelCB).addComponent(G_durabilityCB).addComponent(G_qualityCB).addComponent(G_bondingCB)));
         GROUP2LAYOUT.setVerticalGroup(GROUP2LAYOUT.createSequentialGroup().addGroup(GROUP2LAYOUT.createParallelGroup().addComponent(G_nameLabel).addComponent(G_name).addComponent(G_nameCB)).addGroup(GROUP2LAYOUT.createParallelGroup().addComponent(G_descriptionLabel).addComponent(G_description).addComponent(G_descriptionCB)).addGroup(GROUP2LAYOUT.createParallelGroup().addComponent(G_levelLabel).addComponent(G_level).addComponent(G_levelCB)).addGroup(GROUP2LAYOUT.createParallelGroup().addComponent(G_durabilityLabel).addComponent(G_durability).addComponent(G_durabilityCB)).addGroup(GROUP2LAYOUT.createParallelGroup().addComponent(G_qualityLabel).addComponent(G_quality).addComponent(G_qualityCB)).addGroup(GROUP2LAYOUT.createParallelGroup().addComponent(G_bondingLabel).addComponent(G_bonding).addComponent(G_bondingCB)));
